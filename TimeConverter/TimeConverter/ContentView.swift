@@ -69,11 +69,8 @@ struct ContentView : View {
         return NavigationView {
             
             Form {
-                section1
-                
                 section2
-                
-                
+                section1
                 section3
                 
             }.navigationBarTitle(Text("Swim Time Converter"))
