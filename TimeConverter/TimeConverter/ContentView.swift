@@ -21,7 +21,7 @@ struct ContentView : View {
             Meters.allCases.map{Course.SCM($0)}
     
     func renderCourse(_ c: Course) -> some View {
-        Text(String(describing: c)).tag(c)
+        Text(String(describing: c.self)).tag(c.id)
     }
     
     func coursePicker(_ selection: Binding<Course>, _ label: Text, _ courses: [Course]) -> some View {
