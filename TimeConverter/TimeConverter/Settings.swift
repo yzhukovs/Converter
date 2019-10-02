@@ -9,7 +9,7 @@
 import SwiftUI
 import Combine
 
-enum Yards: Int {
+enum Yards: Int, CaseIterable {
     case _50 = 50
     case _100 = 100
     case _200 = 200
@@ -19,7 +19,7 @@ enum Yards: Int {
     case _1650 = 1650
 }
 
-enum Meters: Int {
+enum Meters: Int, CaseIterable {
     case _50 = 50
     case _100 = 100
     case _200 = 200
@@ -28,7 +28,9 @@ enum Meters: Int {
     case _1500 = 1500
 }
 
-enum Course {
+enum Course:  Hashable,Identifiable  {
+    var id: Course {self}
+    
     case SCY(Yards)
     case LCM(Meters)
     case SCM(Meters)
@@ -64,7 +66,7 @@ enum Conversions {
             return time*Conversions.MagicFactor1*Conversions.MagicFactor2 + Double(t)
         }
         
-        private static func scyToLcmLongDistance2(_ time: Double, _ from: Course, _ to: Course) -> Double {
+        private static func scyToLcmLongDistance2(_ time: Double) -> Double {
             return time + 30.0
         }
         
@@ -78,12 +80,31 @@ enum Conversions {
                     switch (y, m) {
                     case (._500, ._400): return scyToLcmLongDistance1(time, from, to)
                     case (._1000, ._800): return scyToLcmLongDistance1(time, from, to)
-                    case (._1650, ._1500): return scyToLcmLongDistance2(time, from, to)
+                    case (._1650, ._1500): return scyToLcmLongDistance2(time)
                     default: return nil
                     }
                 }
             default: return nil
             }
+        }
+        
+       
+        
+        static func possibleConversions(_ from: Course) -> [Course] {
+            var possible = [Course]()
+            switch from {
+            case (.SCY(let y)):
+                possible.append(contentsOf: Meters.allCases.filter {$0.rawValue == y.rawValue}.map{Course.SCM($0)})
+                possible.append(contentsOf: Meters.allCases.filter {$0.rawValue == y.rawValue}.map {Course.LCM($0)})
+                switch y {
+                case ._500: possible.append(Course.LCM(._400))
+                case ._1000: possible.append(Course.LCM(._800))
+                case ._1650: possible.append(Course.LCM(._1500))
+                default: break
+                }
+            default: break
+            }
+            return possible
         }
     }
     
@@ -94,14 +115,6 @@ enum Conversions {
     }
 }
 
-struct Event {
-    let course: Course
-    let stroke: Settings.Stroke
-    
-    func convert(time: Double /* XXX: some more specific time? */, to: Course) -> Double? {
-        return nil // XXX: implement me
-    }
-}
 
 class Settings {
     private enum Keys {
@@ -140,25 +153,7 @@ class Settings {
         }
     }
     
-    enum Stroke: String, CaseIterable, Hashable, Identifiable  {
-        var id: Stroke {self}
-        var style: String {return self.rawValue}
-        case Backstroke
-        case Butterfly
-        case Breaststroke
-        case Freestyle
-        case IM
-        
-        var factor: Double? {
-            switch self {
-            case .Backstroke: return 0.6
-            case .Breaststroke: return 1.0
-            case . Butterfly: return 0.7
-            case .IM: return 0.8
-            case  .Freestyle: return 0.8
-            }
-        }
-    }
+    
     
     enum Course: String,  CaseIterable, Hashable, Identifiable {
         var id: Course {self}
