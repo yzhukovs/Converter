@@ -55,13 +55,35 @@ struct ContentView : View {
         }
     }
     
+    func getConversion() -> ((Double, Course, Course) -> Double)? {
+        Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).first{
+            $0.0 == toCourse
+            }?.1
+    }
+    
+    func performConversion()-> some View {
+        guard let f = getConversion() else {return Text("Error")}
+        guard let t = enteredTime else {return Text("")}
+       
+      return Text("\( f(t, fromCourse, toCourse))")
+    }
     
     var section3: some View {
         Section {
             Section {
               Text("To course").font(.headline)
-                coursePicker($toCourse, Text("Select to course"), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse))
+                coursePicker($toCourse, Text("Select to course"), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0})
                 
+            }
+        }
+    }
+    
+    var section4: some View {
+        Section {
+            Section {
+              Text("Result").font(.headline)
+            performConversion()
+               
             }
         }
     }
@@ -73,7 +95,7 @@ struct ContentView : View {
                 section1
                 section2
                 section3
-                
+                section4
             }.navigationBarTitle(Text("Swim Time Converter"))
             
         }

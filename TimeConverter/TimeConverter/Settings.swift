@@ -54,7 +54,7 @@ enum Conversions {
     private static let MagicFactor2 = 0.8
     
     enum ShortCourseYardsToMeters {
-        private static func scyToScm(_ time: Double) -> Double { return time * Conversions.MagicFactor1 }
+        private static func scyToScm(_ time: Double, _ from: Course, _ to: Course) -> Double { return time * Conversions.MagicFactor1 }
         
         private static func scyToLcmSameDistance(_ time: Double, _ from: Course, _ to: Course) -> Double {
             let t = to.turns() - from.turns()
@@ -66,40 +66,21 @@ enum Conversions {
             return time*Conversions.MagicFactor1*Conversions.MagicFactor2 + Double(t)
         }
         
-        private static func scyToLcmLongDistance2(_ time: Double) -> Double {
+        private static func scyToLcmLongDistance2(_ time: Double, _ from: Course, _ to: Course) -> Double {
             return time + 30.0
         }
         
-        static func convert(_ time: Double, _ from: Course, _ to: Course) -> Double? {
-            switch (from, to) {
-            case (.SCY(_), .SCM(_)): return scyToScm(time)
-            case (.SCY(let y), .LCM(let m)):
-                if y.rawValue == m.rawValue {
-                    return scyToLcmSameDistance(time, from, to)
-                } else {
-                    switch (y, m) {
-                    case (._500, ._400): return scyToLcmLongDistance1(time, from, to)
-                    case (._1000, ._800): return scyToLcmLongDistance1(time, from, to)
-                    case (._1650, ._1500): return scyToLcmLongDistance2(time)
-                    default: return nil
-                    }
-                }
-            default: return nil
-            }
-        }
         
-       
-        
-        static func possibleConversions(_ from: Course) -> [Course] {
-            var possible = [Course]()
+        static func possibleConversions(_ from: Course) -> [(Course, (Double, Course, Course) -> Double)] {
+            var possible = [(Course, (Double, Course, Course) -> Double)]()
             switch from {
             case (.SCY(let y)):
-                possible.append(contentsOf: Meters.allCases.filter {$0.rawValue == y.rawValue}.map{Course.SCM($0)})
-                possible.append(contentsOf: Meters.allCases.filter {$0.rawValue == y.rawValue}.map {Course.LCM($0)})
+                possible.append(contentsOf: Meters.allCases.filter {$0.rawValue == y.rawValue}.map {(Course.SCM($0), scyToLcmSameDistance)})
+                possible.append(contentsOf: Meters.allCases.filter {$0.rawValue == y.rawValue}.map {(Course.LCM($0), scyToLcmSameDistance)})
                 switch y {
-                case ._500: possible.append(Course.LCM(._400))
-                case ._1000: possible.append(Course.LCM(._800))
-                case ._1650: possible.append(Course.LCM(._1500))
+                case ._500: possible.append((Course.LCM(._400), scyToLcmLongDistance1))
+                case ._1000: possible.append((Course.LCM(._800), scyToLcmLongDistance1))
+                case ._1650: possible.append((Course.LCM(._1500), scyToLcmLongDistance2))
                 default: break
                 }
             default: break
