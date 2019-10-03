@@ -11,23 +11,24 @@ import SwiftUI
 struct ContentView : View {
     
     @State private var fromCourse: Course = Course.SCY(._50)
-    @State var enteredTime: Double?
+   @State var enteredTime: Double?
+    @State var userEntered: String = ""
     @State private var toCourse: Course = Course.SCY(._50)
 
     
     private let availableCourses: [Course] =
-        Yards.allCases.map{Course.SCY($0)} +
-            Meters.allCases.map{Course.LCM($0)} +
-            Meters.allCases.map{Course.SCM($0)}
+        Yards.allCases.map{Course.SCY($0.id)} +
+            Meters.allCases.map{Course.LCM($0.id)} +
+            Meters.allCases.map{Course.SCM($0.id)}
     
     func renderCourse(_ c: Course) -> some View {
-        Text(String(describing: c.self)).tag(c.id)
+        Text(String(describing: c)).tag(c)
     }
     
     func coursePicker(_ selection: Binding<Course>, _ label: Text, _ courses: [Course]) -> some View {
         Picker(selection: selection, label: label) {
             ForEach(courses) { dis in
-                self.renderCourse(dis)
+                self.renderCourse(dis.id)
             }
         }
     }
@@ -48,11 +49,35 @@ struct ContentView : View {
                 
                 //TextField($enteredTime, label: Text("Enter Time:").font(.headline))
                 Text("Time").font(.headline)
-                TextField("1:23.45", value: $enteredTime, formatter: NumberFormatter())
-                // Text("\(enteredTime)!")
+                TextField("1:23.04", text: $userEntered)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
                 
             }
         }
+    }
+    
+    func parseTime(enteredTime: String)-> Double? {
+        
+        let parts = enteredTime.components(separatedBy: ":")
+        if parts.count == 1 {
+            return Double(enteredTime)
+            
+        } else {
+            let minutes = Int(parts.first ?? "") ?? 0
+            let rest = Double(enteredTime.components(separatedBy: ":")[1]) ?? 0.0
+            
+            return (Double((minutes * 60)) + rest)
+        }
+    }
+
+
+    func formatTime(time:Double)-> String {
+        let minutes = Int(time) / 60
+        let seconds = Double(Int(time) % 60) + time - Double(Int(time))
+        
+        return "\(minutes):\(NSString(format: "%2.3f", seconds))"
+    
     }
     
     func getConversion() -> ((Double, Course, Course) -> Double)? {
@@ -62,10 +87,11 @@ struct ContentView : View {
     }
     
     func performConversion()-> some View {
-        guard let f = getConversion() else {return Text("Error")}
-        guard let t = enteredTime else {return Text("")}
-       
-      return Text("\( f(t, fromCourse, toCourse))")
+        guard let f = getConversion() else {return Text("")}
+        let enteredData = parseTime(enteredTime: userEntered)
+        guard let t = enteredData else {return Text("")}
+        let beforeFormat = f(t, fromCourse, toCourse)
+      return Text("\(formatTime(time: beforeFormat))")
     }
     
     var section3: some View {
@@ -96,9 +122,11 @@ struct ContentView : View {
                 section2
                 section3
                 section4
-            }.navigationBarTitle(Text("Swim Time Converter"))
+            }
+            .navigationBarTitle(Text("Swim Time Converter"))
             
         }
+   
         
         
     }
@@ -112,7 +140,7 @@ struct ContentView : View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         
-        ContentView(enteredTime: 0.0)
+        ContentView()
         
     }
 }

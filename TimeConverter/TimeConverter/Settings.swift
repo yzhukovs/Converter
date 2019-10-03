@@ -9,7 +9,8 @@
 import SwiftUI
 import Combine
 
-enum Yards: Int, CaseIterable, Hashable {
+enum Yards: Int, CaseIterable, Hashable, Identifiable {
+     var id: Yards {return self}
     case _50 = 50
     case _100 = 100
     case _200 = 200
@@ -19,7 +20,9 @@ enum Yards: Int, CaseIterable, Hashable {
     case _1650 = 1650
 }
 
-enum Meters: Int, CaseIterable, Hashable {
+enum Meters: Int, CaseIterable, Hashable, Identifiable {
+    var id: Meters {return self}
+    
     case _50 = 50
     case _100 = 100
     case _200 = 200
@@ -29,9 +32,10 @@ enum Meters: Int, CaseIterable, Hashable {
 }
 
 enum Course: Hashable, Identifiable {
-   
+   //  var course: String {return self.rawValue}
     
-    var id: Course {self}
+  
+    var id: Course {return self}
     
     case SCY(Yards)
     case LCM(Meters)
