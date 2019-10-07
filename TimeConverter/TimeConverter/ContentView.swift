@@ -11,10 +11,10 @@ import SwiftUI
 struct ContentView : View {
     
     @State private var fromCourse: Course = Course.SCY(._50)
-   @State var enteredTime: Double?
+    @State var enteredTime: Double?
     @State var userEntered: String = ""
     @State private var toCourse: Course = Course.SCY(._50)
-
+    
     
     private let availableCourses: [Course] =
         Yards.allCases.map{Course.SCY($0.id)} +
@@ -22,26 +22,29 @@ struct ContentView : View {
             Meters.allCases.map{Course.SCM($0.id)}
     
     func renderCourse(_ c: Course) -> some View {
-        Text(String(describing: c)).tag(c)
+        
+        Text("\(c.format())").tag(c)
+        // Text(String(describing: c)).tag(c)
+        
+        
     }
-    
-    func coursePicker(_ selection: Binding<Course>, _ label: Text, _ courses: [Course]) -> some View {
+    func coursePicker(_ selection: Binding<Course>, _ label: Text?, _ courses: [Course]) -> some View {
         Picker(selection: selection, label: label) {
             ForEach(courses) { dis in
                 self.renderCourse(dis.id)
+                
             }
         }
     }
-    
     var section1: some View {
         Section {
             Text("From course").font(.headline)
-            coursePicker($fromCourse, Text("Select from course"), availableCourses)
+            coursePicker($fromCourse, _:nil , availableCourses).labelsHidden()
             
         }
     }
     
-
+    
     
     var section2: some View {
         Section {
@@ -50,8 +53,8 @@ struct ContentView : View {
                 //TextField($enteredTime, label: Text("Enter Time:").font(.headline))
                 Text("Time").font(.headline)
                 TextField("1:23.04", text: $userEntered)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
                 
             }
         }
@@ -70,14 +73,14 @@ struct ContentView : View {
             return (Double((minutes * 60)) + rest)
         }
     }
-
-
+    
+    
     func formatTime(time:Double)-> String {
         let minutes = Int(time) / 60
         let seconds = Double(Int(time) % 60) + time - Double(Int(time))
         
         return "\(minutes):\(NSString(format: "%2.3f", seconds))"
-    
+        
     }
     
     func getConversion() -> ((Double, Course, Course) -> Double)? {
@@ -91,13 +94,15 @@ struct ContentView : View {
         let enteredData = parseTime(enteredTime: userEntered)
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
-      return Text("\(formatTime(time: beforeFormat))")
+        return Text("\(formatTime(time: beforeFormat))")
+        
     }
+    
     
     var section3: some View {
         Section {
             Section {
-              Text("To course").font(.headline)
+                Text("To course").font(.headline)
                 coursePicker($toCourse, Text("Select to course"), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0})
                 
             }
@@ -105,14 +110,28 @@ struct ContentView : View {
     }
     
     var section4: some View {
-        Section {
+        
+        List  {
             Section {
-              Text("Result").font(.headline)
-            performConversion()
-               
+                VStack{
+                Text("Result").font(.headline)
+                performConversion()
+                    
+                    .shadow(color: .black, radius: 1, x: 0, y: 1)
             }
         }
+        }
+        .listRowInsets(EdgeInsets())
+        .padding()
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.blue, lineWidth: 4))
+        
+        
+        
     }
+    
+    
     
     var body: some View {
         return NavigationView {
@@ -122,16 +141,15 @@ struct ContentView : View {
                 section2
                 section3
                 section4
+               NavigationLink(destination: SavedConversions()) {
+                Text("Saved Conversions")
+                }
             }
             .navigationBarTitle(Text("Swim Time Converter"))
             
         }
-   
-        
         
     }
-    
-    
     
 }
 

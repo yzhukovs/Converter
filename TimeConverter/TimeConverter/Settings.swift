@@ -9,8 +9,8 @@
 import SwiftUI
 import Combine
 
-enum Yards: Int, CaseIterable, Hashable, Identifiable {
-     var id: Yards {return self}
+enum Yards: Int, CaseIterable, Hashable, Identifiable  {
+    var id: Yards {return self}
     case _50 = 50
     case _100 = 100
     case _200 = 200
@@ -32,10 +32,50 @@ enum Meters: Int, CaseIterable, Hashable, Identifiable {
 }
 
 enum Course: Hashable, Identifiable {
-   //  var course: String {return self.rawValue}
+    func format() -> String {
+        switch self {
+        case .SCY(let y):
+            return "SCY, Distance in Yards:  \(y.rawValue)"
+        case .LCM (let m):
+            return "LCM, Distance in Meters: \(m.rawValue)"
+        case .SCM (let m):
+            return "SCM, Distance in Meters: \(m.rawValue)"
+        }
+    }
+    static func parse(_ s: String)-> Course? {
+        let twoParts = s.components(separatedBy: "/")
+        switch twoParts[0] {
+        case "SCY":
+            guard let yint = Int(twoParts[1]) else {return nil}
+            guard let yards = Yards(rawValue: yint) else {return nil}
+            return SCY(yards)
+        case "SCM":
+            guard let mint = Int(twoParts[1]) else {return nil}
+            guard let meters = Meters(rawValue: mint) else {return nil}
+            return SCM(meters)
+        case "LCM":
+            guard let mint = Int(twoParts[1]) else {return nil}
+            guard let meters = Meters(rawValue: mint) else {return nil}
+            return LCM(meters)
+        default:
+            break
+        }
+        
+        return nil
+    }
     
-  
-    var id: Course {return self}
+    func serialize()-> String {
+        switch self {
+               case .SCY(let y):
+                   return "SCY/\(y.rawValue)"
+               case .LCM (let m):
+                   return "LCM/\(m.rawValue)"
+               case .SCM (let m):
+                   return "SCM/\(m.rawValue)"
+               }
+    }
+    
+    var id: Course {self}
     
     case SCY(Yards)
     case LCM(Meters)
@@ -98,8 +138,8 @@ enum Conversions {
                 case ._1500: possible.append((Course.SCY(._1650), MetersToShortCourseYards.lcmToScyLongDistance2))
                 default: break
                 }
-                case (.SCM(let m)):
-                               possible.append(contentsOf: Yards.allCases.filter {$0.rawValue == m.rawValue}.map {(Course.SCY($0), MetersToShortCourseYards.convert)})
+            case (.SCM(let m)):
+                possible.append(contentsOf: Yards.allCases.filter {$0.rawValue == m.rawValue}.map {(Course.SCY($0), MetersToShortCourseYards.convert)})
                 
             }
             return possible
@@ -112,11 +152,11 @@ enum Conversions {
         }
         
         //Long course meters to short course yards:
-         static func lcmToScySameDistace(_ time: Double, _ from: Course, _ to: Course) -> Double {
-         let t = to.turns() - from.turns()
+        static func lcmToScySameDistace(_ time: Double, _ from: Course, _ to: Course) -> Double {
+            let t = to.turns() - from.turns()
             return time - Double(t) / Conversions.MagicFactor1
         }
-         static func lcmToScyLongDistance1(_ time: Double, _ from: Course, _ to: Course) -> Double {
+        static func lcmToScyLongDistance1(_ time: Double, _ from: Course, _ to: Course) -> Double {
             let t = to.turns() - from.turns()
             return (time - Double(t)/Conversions.MagicFactor1) * Conversions.MagicFactor3
         }
@@ -124,60 +164,53 @@ enum Conversions {
             return time - 30.0
         }
         
-       
+        
         
         
     }
 }
 
 
-class Settings {
+final class Settings: ObservableObject  {
     private enum Keys {
-        static let distance = "distance_key"
+        static let course = "course"
     }
     
     let objectWillChange = PassthroughSubject<Void, Never>()
+    private let cancellable: Cancellable
+    private let defaults: UserDefaults
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+
+        defaults.register(defaults: [
+            Keys.course: Course.LCM(Meters._50)
+            ])
+
+        cancellable = NotificationCenter.default
+            .publisher(for: UserDefaults.didChangeNotification)
+            .map { _ in () }
+            .subscribe(objectWillChange)
+    }
     
-    
-    
-    
-    enum Distance: Int, CaseIterable, Hashable, Identifiable {
-        var id: Distance {self}
-        var distance: Int { return self.rawValue}
-        case _50 = 50
-        case _100 = 100
-        case _200 = 200
-        case _400 = 400
-        case _500 = 500
-        case _800 = 800
-        case _1000 = 1000
-        case _1500 = 1500
+    var savedCourse: Course? {
+        get {
+            return defaults.string(forKey: Keys.course).flatMap{Course.parse($0)}
+        }
         
-        var turns: Int? {
-            switch self {
-            case ._50: return 1
-            case ._100: return 2
-            case ._200: return 4
-            case ._400: return 8
-            case ._500: return 10
-            case ._800: return 16
-            case ._1000: return 20
-            case ._1500: return 30
-                
-            }
+        set {
+            defaults.set(newValue?.serialize(), forKey: Keys.course)
+            
         }
     }
     
     
     
-    enum Course: String,  CaseIterable, Hashable, Identifiable {
-        var id: Course {self}
-        var course: String {return self.rawValue}
-        case SCYards
-        case LCMeters
-        
+    
     }
-}
+    
+    
+    
+
 
 
 //    var distance: Distance {
