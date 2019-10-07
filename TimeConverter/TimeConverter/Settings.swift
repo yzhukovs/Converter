@@ -9,7 +9,7 @@
 import SwiftUI
 import Combine
 
-enum Yards: Int, CaseIterable, Hashable, Identifiable  {
+enum Yards: Int, CaseIterable, Hashable, Identifiable, Codable  {
     var id: Yards {return self}
     case _50 = 50
     case _100 = 100
@@ -20,7 +20,7 @@ enum Yards: Int, CaseIterable, Hashable, Identifiable  {
     case _1650 = 1650
 }
 
-enum Meters: Int, CaseIterable, Hashable, Identifiable {
+enum Meters: Int, CaseIterable, Hashable, Identifiable, Codable {
     var id: Meters {return self}
     
     case _50 = 50
@@ -32,6 +32,9 @@ enum Meters: Int, CaseIterable, Hashable, Identifiable {
 }
 
 enum Course: Hashable, Identifiable {
+
+   
+    
     func format() -> String {
         switch self {
         case .SCY(let y):
@@ -174,6 +177,7 @@ enum Conversions {
 final class Settings: ObservableObject  {
     private enum Keys {
         static let course = "course"
+        static let enteredTime = "enteredTime"
     }
     
     let objectWillChange = PassthroughSubject<Void, Never>()
@@ -196,19 +200,85 @@ final class Settings: ObservableObject  {
         get {
             return defaults.string(forKey: Keys.course).flatMap{Course.parse($0)}
         }
-        
         set {
             defaults.set(newValue?.serialize(), forKey: Keys.course)
+        }
+    }
+
+    var enteredTime: String? {
+        get {return defaults.string(forKey: Keys.enteredTime) }
+        set {defaults.set(newValue, forKey: Keys.enteredTime)}
             
+        
+    }
+    
+    }
+    
+struct SavedConversion: Codable {
+    let from: Course
+    let to: Course
+    let timeEntered: String
+    let timeConverted: Double
+}
+struct SavingConversions: Codable {
+    
+    let conversions: [SavedConversion]
+    
+   
+}
+
+
+
+extension Course: Codable {
+    
+    enum Key: CodingKey {
+        case rawValue
+        case associatedValue
+    }
+    
+    enum CodingError: Error {
+        case unknownValue
+        case errorDecoding
+    }
+    
+    init(from decoder: Decoder) throws {
+       let container = try decoder.container(keyedBy: Key.self)
+        let rawValue = try container.decode(Int.self, forKey: .rawValue)
+        
+        switch rawValue {
+        case 0:
+            guard let yards = try container.decodeIfPresent(Yards.self, forKey: .associatedValue) else {throw CodingError.errorDecoding}
+            self = .SCY(yards)
+        case 1:
+            guard let meters = try container.decodeIfPresent(Meters.self, forKey: .associatedValue) else {throw CodingError.errorDecoding}
+            self = .LCM(meters)
+        case 2:
+            guard let meters = try container.decodeIfPresent(Meters.self, forKey: .associatedValue) else {throw CodingError.errorDecoding}
+            self = .SCM(meters)
+         default:
+            throw CodingError.unknownValue
+    }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: Key.self)
+        switch self {
+        case .SCY(let y):
+            try container.encode(0, forKey: .rawValue)
+            try container.encode(y, forKey: .associatedValue)
+        case .LCM(let m):
+            try container.encode(1, forKey: .rawValue)
+            try container.encode(m, forKey: .associatedValue)
+        case .SCM(let m):
+            try container.encode(2, forKey: .rawValue)
+            try container.encode(m, forKey: .associatedValue)
+        
         }
     }
     
     
     
-    
-    }
-    
-    
+}
     
 
 

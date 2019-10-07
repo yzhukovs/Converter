@@ -9,9 +9,8 @@
 import SwiftUI
 
 struct ContentView : View {
-    
+    @EnvironmentObject var settings: Settings
     @State private var fromCourse: Course = Course.SCY(._50)
-    @State var enteredTime: Double?
     @State var userEntered: String = ""
     @State private var toCourse: Course = Course.SCY(._50)
     
@@ -22,10 +21,7 @@ struct ContentView : View {
             Meters.allCases.map{Course.SCM($0.id)}
     
     func renderCourse(_ c: Course) -> some View {
-        
         Text("\(c.format())").tag(c)
-        // Text(String(describing: c)).tag(c)
-        
         
     }
     func coursePicker(_ selection: Binding<Course>, _ label: Text?, _ courses: [Course]) -> some View {
@@ -43,9 +39,7 @@ struct ContentView : View {
             
         }
     }
-    
-    
-    
+
     var section2: some View {
         Section {
             Section {
@@ -95,10 +89,8 @@ struct ContentView : View {
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
         return Text("\(formatTime(time: beforeFormat))")
-        
     }
-    
-    
+
     var section3: some View {
         Section {
             Section {
@@ -108,7 +100,6 @@ struct ContentView : View {
             }
         }
     }
-    
     var section4: some View {
         
         List  {
@@ -126,16 +117,11 @@ struct ContentView : View {
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.blue, lineWidth: 4))
-        
-        
-        
+
     }
-    
-    
-    
+
     var body: some View {
         return NavigationView {
-            
             Form {
                 section1
                 section2
