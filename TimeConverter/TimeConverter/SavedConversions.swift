@@ -8,12 +8,22 @@
 
 import SwiftUI
 
+struct SavedConversionRow: View {
+    var sc: SavedConversion
+
+    var body: some View {
+        Text("Come and eat at \(String(sc.timeConverted))")
+    }
+}
+
 
 struct SavedConversions: View {
-  //  @EnvironmentObject var settings: Settings
+    @EnvironmentObject var settings: Settings
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello World!"/*@END_MENU_TOKEN@*/)
-    }
+       // guard let scc = settings.savedCourse else { return List( content: Text(""))}
+        return List(settings.savedCourse?.conversions ?? [], rowContent: SavedConversionRow.init)
+   }
 }
 
 struct SavedConversions_Previews: PreviewProvider {

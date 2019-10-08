@@ -32,8 +32,8 @@ enum Meters: Int, CaseIterable, Hashable, Identifiable, Codable {
 }
 
 enum Course: Hashable, Identifiable {
-
-   
+    
+    
     
     func format() -> String {
         switch self {
@@ -69,13 +69,13 @@ enum Course: Hashable, Identifiable {
     
     func serialize()-> String {
         switch self {
-               case .SCY(let y):
-                   return "SCY/\(y.rawValue)"
-               case .LCM (let m):
-                   return "LCM/\(m.rawValue)"
-               case .SCM (let m):
-                   return "SCM/\(m.rawValue)"
-               }
+        case .SCY(let y):
+            return "SCY/\(y.rawValue)"
+        case .LCM (let m):
+            return "LCM/\(m.rawValue)"
+        case .SCM (let m):
+            return "SCM/\(m.rawValue)"
+        }
     }
     
     var id: Course {self}
@@ -177,15 +177,19 @@ enum Conversions {
 final class Settings: ObservableObject  {
     private enum Keys {
         static let course = "course"
-        static let enteredTime = "enteredTime"
+        // static let enteredTime = "enteredTime"
     }
     
     let objectWillChange = PassthroughSubject<Void, Never>()
     private let cancellable: Cancellable
     private let defaults: UserDefaults
+    
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-
+        
+       // defaults.register(defaults: [Keys.course : SavingConversions.encodedData(conversions) ] )
+        
+        
         cancellable = NotificationCenter.default
             .publisher(for: UserDefaults.didChangeNotification)
             .map { _ in () }
@@ -194,11 +198,16 @@ final class Settings: ObservableObject  {
     
     var savedCourse: SavingConversions? {
         get {
-            if let data = UserDefaults.standard.value(forKey: Keys.course) as? Data {
-                return try? JSONDecoder().decode(SavingConversions.self, from: data)
+            guard let data = defaults.data(forKey: Keys.course) else {
+                print("no model for key: \(Keys.course)")
+                return nil
             }
-            return nil
-            //return defaults.string(forKey: Keys.course).flatMap{Course.parse($0)}
+            guard let model = try? JSONDecoder().decode(SavingConversions.self, from: data) else {
+                print("failed to decode model for key: \(Keys.course)")
+                return nil
+            }
+            print("did load model for key: \(Keys.course)")
+            return model
         }
         set {
             guard newValue != nil else {
@@ -206,34 +215,39 @@ final class Settings: ObservableObject  {
                 return
             }
             let encodedData = try? JSONEncoder().encode(newValue)
-            UserDefaults.standard.set(encodedData, forKey:Keys.course )
-            UserDefaults.standard.synchronize()
+            defaults.set(encodedData, forKey:Keys.course )
+            defaults.synchronize()
             //defaults.set(newValue?.serialize(), forKey: Keys.course)
         }
         
         
     }
+    
+    
+    
+}
 
-    var enteredTime: String? {
-        get {return defaults.string(forKey: Keys.enteredTime) }
-        set {defaults.set(newValue, forKey: Keys.enteredTime)}
-            
-        
-    }
+struct SavedConversion: Codable, Identifiable {
     
-    }
+    var id: Course?
     
-struct SavedConversion: Codable {
     let from: Course
     let to: Course
     let timeEntered: String
     let timeConverted: String
+    
+   
 }
 struct SavingConversions: Codable {
     
     var conversions: [SavedConversion]
     
-   
+    func encodedData() {
+        let encodedData = try? JSONEncoder().encode(conversions)
+        UserDefaults.standard.set(encodedData, forKey: "course" )
+        UserDefaults.standard.synchronize()
+    }
+    
 }
 
 
@@ -251,7 +265,7 @@ extension Course: Codable {
     }
     
     init(from decoder: Decoder) throws {
-       let container = try decoder.container(keyedBy: Key.self)
+        let container = try decoder.container(keyedBy: Key.self)
         let rawValue = try container.decode(Int.self, forKey: .rawValue)
         
         switch rawValue {
@@ -264,9 +278,9 @@ extension Course: Codable {
         case 2:
             guard let meters = try container.decodeIfPresent(Meters.self, forKey: .associatedValue) else {throw CodingError.errorDecoding}
             self = .SCM(meters)
-         default:
+        default:
             throw CodingError.unknownValue
-    }
+        }
     }
     
     func encode(to encoder: Encoder) throws {
@@ -281,14 +295,14 @@ extension Course: Codable {
         case .SCM(let m):
             try container.encode(2, forKey: .rawValue)
             try container.encode(m, forKey: .associatedValue)
-        
+            
         }
     }
     
     
     
 }
-    
+
 
 
 

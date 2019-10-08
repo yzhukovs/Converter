@@ -92,7 +92,7 @@ struct ContentView : View {
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
         let afterFormat = formatTime(time: beforeFormat)
-        let sc = SavedConversion(from: fromCourse, to: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
+        let sc = SavedConversion(id: nil , from: fromCourse, to: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
         settings.savedCourse?.conversions.append(sc)
         return Text("\(afterFormat)")
         
@@ -134,7 +134,7 @@ struct ContentView : View {
                 section2
                 section3
                 section4
-               NavigationLink(destination: SavedConversions()) {
+                NavigationLink(destination: SavedConversions().environmentObject(settings)) {
                 Text("Saved Conversions")
                 }
             }
