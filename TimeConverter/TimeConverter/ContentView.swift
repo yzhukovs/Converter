@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ContentView : View {
     @EnvironmentObject var settings: Settings
+  //  @State var sc: SavingConversions
     @State private var fromCourse: Course = Course.SCY(._50)
     @State var userEntered: String = ""
     @State private var toCourse: Course = Course.SCY(._50)
@@ -86,9 +87,15 @@ struct ContentView : View {
     func performConversion()-> some View {
         guard let f = getConversion() else {return Text("")}
         let enteredData = parseTime(enteredTime: userEntered)
+        
+       // settings.savedCourse?.conversions.
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
-        return Text("\(formatTime(time: beforeFormat))")
+        let afterFormat = formatTime(time: beforeFormat)
+        let sc = SavedConversion(from: fromCourse, to: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
+        settings.savedCourse?.conversions.append(sc)
+        return Text("\(afterFormat)")
+        
     }
 
     var section3: some View {

@@ -186,23 +186,32 @@ final class Settings: ObservableObject  {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
-        defaults.register(defaults: [
-            Keys.course: Course.LCM(Meters._50)
-            ])
-
         cancellable = NotificationCenter.default
             .publisher(for: UserDefaults.didChangeNotification)
             .map { _ in () }
             .subscribe(objectWillChange)
     }
     
-    var savedCourse: Course? {
+    var savedCourse: SavingConversions? {
         get {
-            return defaults.string(forKey: Keys.course).flatMap{Course.parse($0)}
+            if let data = UserDefaults.standard.value(forKey: Keys.course) as? Data {
+                return try? JSONDecoder().decode(SavingConversions.self, from: data)
+            }
+            return nil
+            //return defaults.string(forKey: Keys.course).flatMap{Course.parse($0)}
         }
         set {
-            defaults.set(newValue?.serialize(), forKey: Keys.course)
+            guard newValue != nil else {
+                defaults.removeObject(forKey: Keys.course)
+                return
+            }
+            let encodedData = try? JSONEncoder().encode(newValue)
+            UserDefaults.standard.set(encodedData, forKey:Keys.course )
+            UserDefaults.standard.synchronize()
+            //defaults.set(newValue?.serialize(), forKey: Keys.course)
         }
+        
+        
     }
 
     var enteredTime: String? {
@@ -218,11 +227,11 @@ struct SavedConversion: Codable {
     let from: Course
     let to: Course
     let timeEntered: String
-    let timeConverted: Double
+    let timeConverted: String
 }
 struct SavingConversions: Codable {
     
-    let conversions: [SavedConversion]
+    var conversions: [SavedConversion]
     
    
 }
