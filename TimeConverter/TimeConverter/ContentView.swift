@@ -11,21 +11,21 @@ import SwiftUI
 struct ContentView : View {
     @EnvironmentObject var settings: Settings
   //  @State var sc: SavingConversions
-    @State private var fromCourse: Course = Course.SCY(._50)
+    @State private var fromCourse: Event = Event.SCY(._50)
     @State var userEntered: String = ""
-    @State private var toCourse: Course = Course.SCY(._50)
+    @State private var toCourse: Event = Event.SCY(._50)
     
     
-    private let availableCourses: [Course] =
-        Yards.allCases.map{Course.SCY($0.id)} +
-            Meters.allCases.map{Course.LCM($0.id)} +
-            Meters.allCases.map{Course.SCM($0.id)}
+    private let availableCourses: [Event] =
+        Yards.allCases.map{Event.SCY($0.id)} +
+            Meters.allCases.map{Event.LCM($0.id)} +
+            Meters.allCases.map{Event.SCM($0.id)}
     
-    func renderCourse(_ c: Course) -> some View {
+    func renderCourse(_ c: Event) -> some View {
         Text("\(c.format())").tag(c)
         
     }
-    func coursePicker(_ selection: Binding<Course>, _ label: Text?, _ courses: [Course]) -> some View {
+    func coursePicker(_ selection: Binding<Event>, _ label: Text?, _ courses: [Event]) -> some View {
         Picker(selection: selection, label: label) {
             ForEach(courses) { dis in
                 self.renderCourse(dis.id)
@@ -78,7 +78,7 @@ struct ContentView : View {
         
     }
     
-    func getConversion() -> ((Double, Course, Course) -> Double)? {
+    func getConversion() -> ((Double, Event, Event) -> Double)? {
         Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).first{
             $0.0 == toCourse
             }?.1
@@ -92,8 +92,10 @@ struct ContentView : View {
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
         let afterFormat = formatTime(time: beforeFormat)
-        let sc = SavedConversion(id: nil , from: fromCourse, to: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
-        settings.savedCourse?.conversions.append(sc)
+        let sc = History(id: nil , fromCourse: fromCourse, toCourse: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
+        var scs = settings.savedCourse ?? SavingHistory(conversions: [])
+        scs = SavingHistory(conversions: scs.conversions + [sc])
+        settings.savedCourse = scs
         return Text("\(afterFormat)")
         
     }

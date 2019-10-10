@@ -9,10 +9,10 @@
 import SwiftUI
 
 struct SavedConversionRow: View {
-    var sc: SavedConversion
+    var sc: History
 
     var body: some View {
-        Text("Come and eat at \(String(sc.timeConverted))")
+        Text("Converted: \(String(sc.timeEntered))")
     }
 }
 
