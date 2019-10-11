@@ -162,10 +162,7 @@ enum Conversions {
         static func lcmToScyLongDistance2(_ time: Double, _ from: Event, _ to: Event) -> Double {
             return time - 30.0
         }
-        
-        
-        
-        
+
     }
 }
 

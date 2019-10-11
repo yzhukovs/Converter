@@ -34,6 +34,7 @@ struct ContentView : View {
         }
     }
     var section1: some View {
+        
         Section {
             Text("From course").font(.headline)
             coursePicker($fromCourse, _:nil , availableCourses).labelsHidden()
@@ -48,6 +49,7 @@ struct ContentView : View {
                 //TextField($enteredTime, label: Text("Enter Time:").font(.headline))
                 Text("Time").font(.headline)
                 TextField("1:23.04", text: $userEntered)
+                    .keyboardType(.numbersAndPunctuation)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
@@ -87,12 +89,10 @@ struct ContentView : View {
     func performConversion()-> some View {
         guard let f = getConversion() else {return Text("")}
         let enteredData = parseTime(enteredTime: userEntered)
-        
-       // settings.savedCourse?.conversions.
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
         let afterFormat = formatTime(time: beforeFormat)
-        let sc = History(id: nil , fromCourse: fromCourse, toCourse: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
+        let sc = History(id: UUID() , fromCourse: fromCourse, toCourse: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
         var scs = settings.savedCourse ?? SavingHistory(conversions: [])
         scs = SavingHistory(conversions: scs.conversions + [sc])
         settings.savedCourse = scs
@@ -104,7 +104,7 @@ struct ContentView : View {
         Section {
             Section {
                 Text("To course").font(.headline)
-                coursePicker($toCourse, Text("Select to course"), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0})
+                coursePicker($toCourse, Text(""), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0}).labelsHidden()
                 
             }
         }

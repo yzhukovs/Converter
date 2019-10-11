@@ -14,7 +14,7 @@ import Combine
 final class Settings: ObservableObject  {
     private enum Keys {
         static let course = "course"
-        // static let enteredTime = "enteredTime"
+
     }
     
     let objectWillChange = PassthroughSubject<Void, Never>()
@@ -52,8 +52,6 @@ final class Settings: ObservableObject  {
             }
             
             
-            // print("did load model for key: \(Keys.course)")
-            
         }
         set {
             guard newValue != nil else {
@@ -70,20 +68,14 @@ final class Settings: ObservableObject  {
         
     }
     
-    
-    
 }
 
-struct History: Codable, Identifiable {
-    
-    var id: Event?
-    
+struct History: Codable, Identifiable, Hashable {
+    let id: UUID
     let fromCourse: Event
     let toCourse: Event
     let timeEntered: String
     let timeConverted: String
-    
-    
 }
 struct SavingHistory: Codable {
     
