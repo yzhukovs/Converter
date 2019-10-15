@@ -31,9 +31,11 @@ struct SavedConversions: View {
         let xs: [History] = settings.savedCourse?.conversions ?? []
         return List {
             ForEach(xs, id: \.self) { x in
-                HStack {
-                    Text("\(x.fromCourse.format())" ).tag(x)
+                VStack(alignment: .leading) {
+                    Text("\(x.fromCourse.format())").tag(x)
                    Text("\(x.toCourse.format())").tag(x)
+                    Text("Entered: \(x.timeEntered) Converted:\((x.timeConverted))").tag(x)
+                    
 
                 }
             }

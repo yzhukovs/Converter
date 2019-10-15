@@ -73,10 +73,14 @@ struct ContentView : View {
     
     
     func formatTime(time:Double)-> String {
+        if time  == 0 {
+            return ""
+        }
+        
         let minutes = Int(time) / 60
         let seconds = Double(Int(time) % 60) + time - Double(Int(time))
         
-        return "\(minutes):\(NSString(format: "%2.3f", seconds))"
+        return "\(minutes):\(NSString(format: "%2.2f", seconds))"
         
     }
     
@@ -102,12 +106,13 @@ struct ContentView : View {
 
     var section3: some View {
         Section {
-            Section {
-                Text("To course").font(.headline)
+            Section(header: Text("To course") ) {
+               // Text("To course").font(.headline)
                 coursePicker($toCourse, Text(""), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0}).labelsHidden()
                 
             }
-        }
+            }
+            .padding(.trailing)
     }
     var section4: some View {
         
@@ -116,7 +121,6 @@ struct ContentView : View {
                 VStack{
                 Text("Result").font(.headline)
                 performConversion()
-                    
                     .shadow(color: .black, radius: 1, x: 0, y: 1)
             }
         }
@@ -130,7 +134,7 @@ struct ContentView : View {
     }
 
     var body: some View {
-        return NavigationView {
+        NavigationView {
             Form {
                 section1
                 section2

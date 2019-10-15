@@ -35,7 +35,7 @@ enum Event: Hashable, Identifiable {
     func format() -> String {
         switch self {
         case .SCY(let y):
-            return "SCY, Distance in Yards:  \(y.rawValue)"
+            return "SCY, Distance in Yards: \(y.rawValue)"
         case .LCM (let m):
             return "LCM, Distance in Meters: \(m.rawValue)"
         case .SCM (let m):
