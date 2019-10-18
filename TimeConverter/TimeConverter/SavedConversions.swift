@@ -9,18 +9,6 @@
 import SwiftUI
 import Combine
 
-//struct SavedConversionRow: View {
-// var history: History
-//    @EnvironmentObject var settings: Settings
-//
-//    var body: some View {
-//        ForEach(settings.savedCourse?.conversions ?? [], id: \.self) { event in
-//            Text(String(event))
-//        }
-//       // guard let sc = settings.savedCourse else { return Text("") }
-//       // Text("Converted: \(settings.savedCourse?.conversions[]))")
-//    }
-//}
 
 
 struct SavedConversions: View {
@@ -39,21 +27,30 @@ struct SavedConversions: View {
 
                 }
             }
+            .onDelete(perform: delete)
         }
-    }
-    func renderCourse(_ c: Event) -> some View {
-        Text("\(c.format())").tag(c)
         
     }
     
-    //    func coursePicker(_ selection: Binding<[Event]>, _ label: Text?) -> some View {
-    //    Picker(selection: selection, label: label) {
-    //        ForEach(courses) { dis in
-    //            self.renderCourse(dis.id)
-    //
-    //        }
-    //    }
-    //    }
+    
+    func renderCourse(_ c: Event) -> some View {
+        Text("\(c.format())").tag(c)
+    }
+    
+    func delete(at offsets: IndexSet) {
+        var array = settings.savedCourse?.conversions ?? []
+        guard let index = Array(offsets).first else { return }
+        let forDeletion = array[index]
+        print(forDeletion)
+        if let currentIndex = array.firstIndex(of: forDeletion) {
+            array.remove(at: currentIndex)
+        }
+                
+        
+        
+       //  offsets.forEach  {_ in settings.savedCourse?.conversions.remove(atOffsets: offsets)}
+        print(offsets)
+    }
 }
 
 struct SavedConversions_Previews: PreviewProvider {

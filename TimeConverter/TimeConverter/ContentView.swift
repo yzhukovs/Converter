@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct ContentView : View {
     @EnvironmentObject var settings: Settings
@@ -48,17 +49,20 @@ struct ContentView : View {
                 
                 //TextField($enteredTime, label: Text("Enter Time:").font(.headline))
                 Text("Time").font(.headline)
-                TextField("1:23.04", text: $userEntered)
-                    .keyboardType(.numbersAndPunctuation)
+                 SATextField(tag: 0, placeholder: "1:23.04", changeHandler: { (newString) in
+                               self.userEntered = WrappableTextField.formattedNumber(newString)
+                           }, onCommitHandler: {
+                            
+                           })
+                    .keyboardType(.numberPad)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
                 
             }
         }
     }
     
     func parseTime(enteredTime: String)-> Double? {
-        
+        print(enteredTime)
         let parts = enteredTime.components(separatedBy: ":")
         if parts.count == 1 {
             return Double(enteredTime)
@@ -76,7 +80,6 @@ struct ContentView : View {
         if time  == 0 {
             return ""
         }
-        
         let minutes = Int(time) / 60
         let seconds = Double(Int(time) % 60) + time - Double(Int(time))
         
@@ -95,6 +98,7 @@ struct ContentView : View {
         let enteredData = parseTime(enteredTime: userEntered)
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
+        print(t)
         let afterFormat = formatTime(time: beforeFormat)
         let sc = History(id: UUID() , fromCourse: fromCourse, toCourse: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
         var scs = settings.savedCourse ?? SavingHistory(conversions: [])
@@ -108,7 +112,7 @@ struct ContentView : View {
         Section {
             Section(header: Text("To course") ) {
                // Text("To course").font(.headline)
-                coursePicker($toCourse, Text(""), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0}).labelsHidden()
+                coursePicker($toCourse, Text("Select"), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0})//.labelsHidden()
                 
             }
             }
@@ -150,6 +154,122 @@ struct ContentView : View {
         
     }
     
+}
+
+class WrappableTextField: UITextField, UITextFieldDelegate {
+    var textFieldChangedHandler: ((String)->Void)?
+    var onCommitHandler: (()->Void)?
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if let nextField = textField.superview?.superview?.viewWithTag(textField.tag + 1) as? UITextField {
+            nextField.becomeFirstResponder()
+        } else {
+            textField.resignFirstResponder()
+        }
+        return false
+    }
+    
+    static func formattedNumber(_ str: String) -> String {
+        let numbers = Set("0123456789")
+        let stripped = str.filter { numbers.contains($0) }
+
+        guard let number = Int(stripped) else { return "" }
+        let mili = number % 100
+        let seconds = number % 10000 / 100
+        let minutes = number % 1000000 / 10000
+
+        var formatted: String = ""
+        
+        if str.count > 4 {
+            formatted = "\(String(format: "%02i", minutes)):\(String(format: "%02i", seconds)).\(String(format: "%02i", mili))"
+        } else {
+            formatted = "\(String(format: "%02i", seconds)).\(String(format: "%02i", mili))"
+        }
+        return formatted
+    }
+    
+//    private func formattedNumber(number: String) -> String {
+//        let entryNumber = number.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+//        let mask = "XX:XX.XX"
+//        var result = ""
+//        var index = entryNumber.startIndex
+//        for i in mask where index < entryNumber.endIndex {
+//            if i == "X" {
+//                result.append(entryNumber[index])
+//                index = entryNumber.index(after: index)
+//            } else {
+//                result.append(i)
+//            }
+//        }
+//        return result
+//    }
+    
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        self.rightViewMode = .always
+        
+       guard let currentValue = textField.text else {
+            return true
+        }
+        
+        if let currentValue = textField.text as NSString? {
+            let proposedValue = currentValue.replacingCharacters(in: range, with: string)
+            textFieldChangedHandler?(proposedValue as String)
+        }
+        
+        let newString = (currentValue as NSString).replacingCharacters(in: range, with: string)
+        textField.text = WrappableTextField.formattedNumber(newString)
+        return false
+        
+//        if string == "" {
+//            currentValue.remove(at: currentValue.index(currentValue.startIndex, offsetBy: range.location))
+//        }
+        
+ 
+//        let array = currentValue.compactMap({ Int(String($0)) })
+//
+//        let num = Double(array.reduce(0, {($0 * 10) + $1})) / 1000000
+//
+//        guard let formatting = formatter.string(from: NSNumber(value: num)) else { return true }
+//        currentValue = formatting
+       
+        
+        
+    }
+    
+    func setCursor(position: Int) {
+        let position = self.position(from: endOfDocument, offset: position)!
+        selectedTextRange = textRange(from: position, to: position)
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        onCommitHandler?()
+        
+    
+    }
+    
+}
+
+struct SATextField: UIViewRepresentable {
+    private let tmpView = WrappableTextField()
+
+    var tag:Int = 0
+    var placeholder:String?
+    var changeHandler:((String)->Void)?
+    var onCommitHandler:(()->Void)?
+    
+    func makeUIView(context: UIViewRepresentableContext<SATextField>) -> WrappableTextField {
+        tmpView.tag = tag
+        tmpView.delegate = tmpView
+        tmpView.placeholder = placeholder
+        tmpView.onCommitHandler = onCommitHandler
+        tmpView.textFieldChangedHandler = changeHandler
+        return tmpView
+    }
+    
+    func updateUIView(_ uiView: WrappableTextField, context: UIViewRepresentableContext<SATextField>) {
+        uiView.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        uiView.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    }
 }
 
 
