@@ -206,6 +206,7 @@ class WrappableTextField: UITextField, UITextFieldDelegate {
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         self.rightViewMode = .always
+        textField.clearButtonMode = .always
         
        guard let currentValue = textField.text else {
             return true

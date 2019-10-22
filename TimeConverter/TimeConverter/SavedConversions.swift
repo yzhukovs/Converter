@@ -21,10 +21,10 @@ struct SavedConversions: View {
             ForEach(xs, id: \.self) { x in
                 VStack(alignment: .leading) {
                     Text("\(x.fromCourse.format())").tag(x)
-                   Text("\(x.toCourse.format())").tag(x)
+                    Text("\(x.toCourse.format())").tag(x)
                     Text("Entered: \(x.timeEntered) Converted:\((x.timeConverted))").tag(x)
                     
-
+                    
                 }
             }
             .onDelete(perform: delete)
@@ -38,18 +38,12 @@ struct SavedConversions: View {
     }
     
     func delete(at offsets: IndexSet) {
-        var array = settings.savedCourse?.conversions ?? []
         guard let index = Array(offsets).first else { return }
-        let forDeletion = array[index]
-        print(forDeletion)
-        if let currentIndex = array.firstIndex(of: forDeletion) {
-            array.remove(at: currentIndex)
-        }
-                
-        
-        
-       //  offsets.forEach  {_ in settings.savedCourse?.conversions.remove(atOffsets: offsets)}
-        print(offsets)
+        var scs = settings.savedCourse ?? SavingHistory(conversions: [])
+         scs.conversions.remove(at: index)
+       
+        settings.savedCourse = scs
+       
     }
 }
 
