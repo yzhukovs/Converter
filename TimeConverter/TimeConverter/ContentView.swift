@@ -54,11 +54,16 @@ struct ContentView : View {
                            }, onCommitHandler: {
                             
                            })
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    //.keyboardType(.numberPad)
+                   // .textContentType(.oneTimeCode)
+                   // .textFieldStyle(RoundedBorderTextFieldStyle())
                 
             }
+            
         }
+        .keyboardType(.numberPad)
+        .textContentType(.oneTimeCode)
+        .textFieldStyle(RoundedBorderTextFieldStyle())
     }
     
     func parseTime(enteredTime: String)-> Double? {
@@ -163,8 +168,11 @@ class WrappableTextField: UITextField, UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if let nextField = textField.superview?.superview?.viewWithTag(textField.tag + 1) as? UITextField {
             nextField.becomeFirstResponder()
+            addDoneButtonOnKeyboard()
+            self.keyboardType = .numberPad
         } else {
             textField.resignFirstResponder()
+        
         }
         return false
     }
@@ -187,25 +195,12 @@ class WrappableTextField: UITextField, UITextFieldDelegate {
         }
         return formatted
     }
-    
-//    private func formattedNumber(number: String) -> String {
-//        let entryNumber = number.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-//        let mask = "XX:XX.XX"
-//        var result = ""
-//        var index = entryNumber.startIndex
-//        for i in mask where index < entryNumber.endIndex {
-//            if i == "X" {
-//                result.append(entryNumber[index])
-//                index = entryNumber.index(after: index)
-//            } else {
-//                result.append(i)
-//            }
-//        }
-//        return result
-//    }
+
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        
         self.rightViewMode = .always
+        self.keyboardType = .numberPad
         textField.clearButtonMode = .always
         
        guard let currentValue = textField.text else {
@@ -237,16 +232,26 @@ class WrappableTextField: UITextField, UITextFieldDelegate {
         
     }
     
-    func setCursor(position: Int) {
-        let position = self.position(from: endOfDocument, offset: position)!
-        selectedTextRange = textRange(from: position, to: position)
-    }
+    func addDoneButtonOnKeyboard() {
+       let doneToolbar: UIToolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 50))
+       doneToolbar.barStyle       = UIBarStyle.default
+    let flexSpace              = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.flexibleSpace, target: nil, action: nil)
+    let done: UIBarButtonItem  = UIBarButtonItem(title: "Done", style: UIBarButtonItem.Style.done, target: self, action: #selector(doneButtonAction))
+
+       var items = [UIBarButtonItem]()
+       items.append(flexSpace)
+       items.append(done)
+
+       doneToolbar.items = items
+       doneToolbar.sizeToFit()
+
+    self.inputAccessoryView = doneToolbar
+   }
+
+    @objc func doneButtonAction() {
+       self.resignFirstResponder()
+   }
     
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        onCommitHandler?()
-        
-    
-    }
     
 }
 
@@ -259,15 +264,18 @@ struct SATextField: UIViewRepresentable {
     var onCommitHandler:(()->Void)?
     
     func makeUIView(context: UIViewRepresentableContext<SATextField>) -> WrappableTextField {
+       
         tmpView.tag = tag
         tmpView.delegate = tmpView
         tmpView.placeholder = placeholder
         tmpView.onCommitHandler = onCommitHandler
         tmpView.textFieldChangedHandler = changeHandler
+        tmpView.keyboardType = .numberPad
         return tmpView
     }
     
     func updateUIView(_ uiView: WrappableTextField, context: UIViewRepresentableContext<SATextField>) {
+         uiView.addDoneButtonOnKeyboard()
         uiView.setContentHuggingPriority(.defaultHigh, for: .vertical)
         uiView.setContentHuggingPriority(.defaultLow, for: .horizontal)
     }

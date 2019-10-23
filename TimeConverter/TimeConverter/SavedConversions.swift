@@ -20,6 +20,7 @@ struct SavedConversions: View {
         return List {
             ForEach(xs, id: \.self) { x in
                 VStack(alignment: .leading) {
+                    Image(systemName: "stopwatch")
                     Text("\(x.fromCourse.format())").tag(x)
                     Text("\(x.toCourse.format())").tag(x)
                     Text("Entered: \(x.timeEntered) Converted:\((x.timeConverted))").tag(x)
@@ -41,7 +42,7 @@ struct SavedConversions: View {
         guard let index = Array(offsets).first else { return }
         var scs = settings.savedCourse ?? SavingHistory(conversions: [])
          scs.conversions.remove(at: index)
-       
+        //print(scs.conversions.remove(at: index))
         settings.savedCourse = scs
        
     }
