@@ -54,10 +54,6 @@ struct ContentView : View {
                            }, onCommitHandler: {
                             
                            })
-                    //.keyboardType(.numberPad)
-                   // .textContentType(.oneTimeCode)
-                   // .textFieldStyle(RoundedBorderTextFieldStyle())
-                
             }
             
         }

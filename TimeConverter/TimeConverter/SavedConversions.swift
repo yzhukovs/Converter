@@ -20,7 +20,7 @@ struct SavedConversions: View {
         return List {
             ForEach(xs, id: \.self) { x in
                 VStack(alignment: .leading) {
-                    Image(systemName: "stopwatch")
+                    Image(systemName: "stopwatch").foregroundColor(.purple)
                     Text("\(x.fromCourse.format())").tag(x)
                     Text("\(x.toCourse.format())").tag(x)
                     Text("Entered: \(x.timeEntered) Converted:\((x.timeConverted))").tag(x)
