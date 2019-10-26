@@ -13,7 +13,7 @@ struct ContentView : View {
     @EnvironmentObject var settings: Settings
   //  @State var sc: SavingConversions
     @State private var fromCourse: Event = Event.SCY(._50)
-    @State var userEntered: String = ""
+    @State private var userEntered: String = ""
     @State private var toCourse: Event = Event.SCY(._50)
     
     
@@ -51,9 +51,11 @@ struct ContentView : View {
                 Text("Time").font(.headline)
                  SATextField(tag: 0, placeholder: "1:23.04", changeHandler: { (newString) in
                                self.userEntered = WrappableTextField.formattedNumber(newString)
-                           }, onCommitHandler: {
-                            
-                           })
+                           }
+                    , onCommitHandler: {
+                        self.persistance(input: self.userEntered)
+                        
+                 })
             }
             
         }
@@ -94,6 +96,14 @@ struct ContentView : View {
             }?.1
     }
     
+   func persistance(input: String){
+        let sc = History(id: UUID() , fromCourse: fromCourse, toCourse: toCourse, timeEntered: userEntered, timeConverted: input)
+        var scs = settings.savedCourse ?? SavingHistory(conversions: [])
+        scs = SavingHistory(conversions: scs.conversions + [sc])
+        settings.savedCourse = scs
+        
+    }
+    
     func performConversion()-> some View {
         guard let f = getConversion() else {return Text("")}
         let enteredData = parseTime(enteredTime: userEntered)
@@ -101,10 +111,7 @@ struct ContentView : View {
         let beforeFormat = f(t, fromCourse, toCourse)
         print(t)
         let afterFormat = formatTime(time: beforeFormat)
-        let sc = History(id: UUID() , fromCourse: fromCourse, toCourse: toCourse, timeEntered: userEntered, timeConverted: afterFormat)
-        var scs = settings.savedCourse ?? SavingHistory(conversions: [])
-        scs = SavingHistory(conversions: scs.conversions + [sc])
-        settings.savedCourse = scs
+       //persistance(input: afterFormat)
         return Text("\(afterFormat)")
         
     }
@@ -138,6 +145,7 @@ struct ContentView : View {
 
     }
 
+
     var body: some View {
         NavigationView {
             Form {
@@ -157,18 +165,24 @@ struct ContentView : View {
     
 }
 
+
+
 class WrappableTextField: UITextField, UITextFieldDelegate {
+    var contentView = ContentView()
     var textFieldChangedHandler: ((String)->Void)?
     var onCommitHandler: (()->Void)?
     
+    
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        if let nextField = textField.superview?.superview?.viewWithTag(textField.tag + 1) as? UITextField {
+        if let nextField = textField.superview?.viewWithTag(textField.tag + 1) as? UITextField {
             nextField.becomeFirstResponder()
             addDoneButtonOnKeyboard()
+            self.returnKeyType = .done
             self.keyboardType = .numberPad
         } else {
             textField.resignFirstResponder()
-        
+            addDoneButtonOnKeyboard()
+            self.returnKeyType = .done
         }
         return false
     }
@@ -181,9 +195,8 @@ class WrappableTextField: UITextField, UITextFieldDelegate {
         let mili = number % 100
         let seconds = number % 10000 / 100
         let minutes = number % 1000000 / 10000
-
         var formatted: String = ""
-        
+
         if str.count > 4 {
             formatted = "\(String(format: "%02i", minutes)):\(String(format: "%02i", seconds)).\(String(format: "%02i", mili))"
         } else {
@@ -194,11 +207,9 @@ class WrappableTextField: UITextField, UITextFieldDelegate {
 
     
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        
         self.rightViewMode = .always
         self.keyboardType = .numberPad
         textField.clearButtonMode = .always
-        
        guard let currentValue = textField.text else {
             return true
         }
@@ -210,50 +221,41 @@ class WrappableTextField: UITextField, UITextFieldDelegate {
         
         let newString = (currentValue as NSString).replacingCharacters(in: range, with: string)
         textField.text = WrappableTextField.formattedNumber(newString)
+       
         return false
         
-//        if string == "" {
-//            currentValue.remove(at: currentValue.index(currentValue.startIndex, offsetBy: range.location))
-//        }
-        
- 
-//        let array = currentValue.compactMap({ Int(String($0)) })
-//
-//        let num = Double(array.reduce(0, {($0 * 10) + $1})) / 1000000
-//
-//        guard let formatting = formatter.string(from: NSNumber(value: num)) else { return true }
-//        currentValue = formatting
+    }
+        func addDoneButtonOnKeyboard() {
+            let doneToolbar: UIToolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 50))
+            doneToolbar.barStyle       = UIBarStyle.default
+         let flexSpace              = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.flexibleSpace, target: nil, action: nil)
+            let done: UIBarButtonItem  = UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(doneButtonAction))
+            
+            var items = [UIBarButtonItem]()
+            items.append(flexSpace)
+            items.append(done)
+
+            doneToolbar.items = items
+            doneToolbar.sizeToFit()
+
+            self.inputAccessoryView = doneToolbar
+        }
+        @objc func doneButtonAction() {
+            self.returnKeyType = .done
+            if let och = self.onCommitHandler {
+                och()
+            }
+            self.resignFirstResponder()
+        }
        
         
         
-    }
-    
-    func addDoneButtonOnKeyboard() {
-       let doneToolbar: UIToolbar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 50))
-       doneToolbar.barStyle       = UIBarStyle.default
-    let flexSpace              = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.flexibleSpace, target: nil, action: nil)
-    let done: UIBarButtonItem  = UIBarButtonItem(title: "Done", style: UIBarButtonItem.Style.done, target: self, action: #selector(doneButtonAction))
-
-       var items = [UIBarButtonItem]()
-       items.append(flexSpace)
-       items.append(done)
-
-       doneToolbar.items = items
-       doneToolbar.sizeToFit()
-
-    self.inputAccessoryView = doneToolbar
-   }
-
-    @objc func doneButtonAction() {
-       self.resignFirstResponder()
-   }
-    
-    
+  
 }
 
 struct SATextField: UIViewRepresentable {
     private let tmpView = WrappableTextField()
-
+    
     var tag:Int = 0
     var placeholder:String?
     var changeHandler:((String)->Void)?
