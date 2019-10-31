@@ -62,7 +62,6 @@ final class Settings: ObservableObject  {
             guard let encodedData = newValue?.encodedData() else {return}
             defaults.set(encodedData, forKey:Keys.course )
             defaults.synchronize()
-            //defaults.set(newValue?.serialize(), forKey: Keys.course)
         }
         
         
@@ -75,19 +74,16 @@ struct History: Codable, Identifiable, Hashable {
     let fromCourse: Event
     let toCourse: Event
     let timeEntered: String
-    let timeConverted: String
+    var timeConverted: String
+    
+    func copy(timeConverted: String ) -> History {
+        return History(id: id, fromCourse: fromCourse, toCourse: toCourse, timeEntered: timeEntered, timeConverted: timeConverted)
+    }
 }
 struct SavingHistory: Codable {
-    
     var conversions: [History]
     
     func encodedData() -> Data {
         return try! JSONEncoder().encode(self)
-        
     }
-    
 }
-
-
-
-

@@ -15,6 +15,8 @@ struct ContentView : View {
     @State private var fromCourse: Event = Event.SCY(._50)
     @State private var userEntered: String = ""
     @State private var toCourse: Event = Event.SCY(._50)
+    @State private var lastUUID: UUID? = nil
+        var result: String = ""
     
     
     private let availableCourses: [Event] =
@@ -43,7 +45,7 @@ struct ContentView : View {
         }
     }
 
-    var section2: some View {
+    var section3: some View {
         Section {
             Section {
                 
@@ -97,31 +99,39 @@ struct ContentView : View {
     }
     
    func persistance(input: String){
-        let sc = History(id: UUID() , fromCourse: fromCourse, toCourse: toCourse, timeEntered: userEntered, timeConverted: input)
+        let sc = History(id: UUID() , fromCourse: fromCourse, toCourse: toCourse, timeEntered: input, timeConverted: result )
         var scs = settings.savedCourse ?? SavingHistory(conversions: [])
         scs = SavingHistory(conversions: scs.conversions + [sc])
         settings.savedCourse = scs
-        
+    lastUUID = sc.id
     }
     
-    func performConversion()-> some View {
+     func performConversion()-> some View {
         guard let f = getConversion() else {return Text("")}
         let enteredData = parseTime(enteredTime: userEntered)
         guard let t = enteredData else {return Text("")}
         let beforeFormat = f(t, fromCourse, toCourse)
         print(t)
         let afterFormat = formatTime(time: beforeFormat)
-       //persistance(input: afterFormat)
-        return Text("\(afterFormat)")
+        let xs: [History] = (settings.savedCourse?.conversions ?? []).map {
+            if $0.id == lastUUID {
+                return $0.copy(timeConverted: afterFormat)
+            } else {
+                return $0
+            }
+        }
+        var scs = settings.savedCourse ?? SavingHistory(conversions: [])
+        scs = SavingHistory(conversions: scs.conversions + xs )
+        settings.savedCourse = scs
         
+        return Text("\(afterFormat)")
     }
 
-    var section3: some View {
+    var section2: some View {
         Section {
             Section(header: Text("To course") ) {
                // Text("To course").font(.headline)
-                coursePicker($toCourse, Text("Select"), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0})//.labelsHidden()
-                
+                coursePicker($toCourse, Text("Select"), Conversions.ShortCourseYardsToMeters.possibleConversions(fromCourse).map{$0.0})
             }
             }
             .padding(.trailing)

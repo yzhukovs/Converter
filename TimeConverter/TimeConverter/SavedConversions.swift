@@ -15,22 +15,25 @@ struct SavedConversions: View {
     @EnvironmentObject var settings: Settings
     
     var body: some View {
-        // guard let scc = settings.savedCourse else { return List( content: Text(""))}
+       
         let xs: [History] = settings.savedCourse?.conversions ?? []
-        return List {
+       return NavigationView {
+        List {
             ForEach(xs, id: \.self) { x in
+               
                 VStack(alignment: .leading) {
+                     if x.timeConverted != "" {
                     Image(systemName: "stopwatch").foregroundColor(.purple)
                     Text("\(x.fromCourse.format())").tag(x)
                     Text("\(x.toCourse.format())").tag(x)
-                    Text("Entered: \(x.timeEntered) Converted:\((x.timeConverted))").tag(x)
+                    Text("Entered: \(x.timeEntered) Converted:\((x.timeConverted))")
                     
-                    
+                    }
                 }
             }
             .onDelete(perform: delete)
+            }.navigationBarItems(leading: EditButton())
         }
-        
     }
     
     
