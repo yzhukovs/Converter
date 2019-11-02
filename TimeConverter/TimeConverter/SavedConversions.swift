@@ -19,7 +19,7 @@ struct SavedConversions: View {
         let xs: [History] = settings.savedCourse?.conversions ?? []
        return NavigationView {
         List {
-            ForEach(xs, id: \.self) { x in
+            ForEach(xs, id: \.id) { x in
                
                 VStack(alignment: .leading) {
                      if x.timeConverted != "" {
